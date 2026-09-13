@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manajemen Keuangan Pribadi</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    padding: 16px;
+    color: #1a1a1a;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 19px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 0 0 12px; color: #333; }
+  .sub { font-size: 12.5px; color: #666; margin-bottom: 14px; }
+
+  /* Tabs utama */
+  .maintabs {
+    display: flex; gap: 8px; margin-bottom: 14px;
+  }
+  .maintabs button {
+    flex: 1; padding: 11px; border-radius: 10px; border: none;
+    background: #fff; color: #666; font-size: 13.5px; font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .maintabs button.active { background: #4f46e5; color: #fff; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .month-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .month-nav button {
+    border: none; background: #eef2ff; color: #4338ca; width: 34px; height: 34px;
+    border-radius: 8px; font-size: 16px; font-weight: 700;
+  }
+  .month-nav .label { font-weight: 700; font-size: 15px; }
+
+  .summary-grid { display: flex; gap: 10px; }
+  .sum-box { flex: 1; border-radius: 10px; padding: 12px; }
+  .sum-box .lbl { font-size: 11.5px; opacity: 0.8; }
+  .sum-box .val { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .sum-in { background: #ecfdf5; color: #065f46; }
+  .sum-out { background: #fef2f2; color: #991b1b; }
+  .sum-net { background: #eef2ff; color: #3730a3; }
+
+  .progress-outer {
+    background: #eee; border-radius: 8px; height: 10px; overflow: hidden; margin-top: 6px;
+  }
+  .progress-inner { height: 100%; background: #4f46e5; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; margin-top: 12px; color: #333; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 15px; background: #fafafa;
+  }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > div { flex: 1; }
+
+  .toggle { display: flex; gap: 8px; margin-top: 12px; }
+  .toggle button {
+    flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff;
+    font-size: 13.5px; font-weight: 600; color: #888;
+  }
+  .toggle button.active.in { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+  .toggle button.active.out { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
+  .btn-primary {
+    width: 100%; margin-top: 16px; padding: 13px; border: none; border-radius: 9px;
+    background: #4f46e5; color: #fff; font-size: 14.5px; font-weight: 700;
+  }
+  .btn-secondary {
+    padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px;
+    background: #fff; color: #4338ca; font-size: 12.5px; font-weight: 700;
+  }
+  .btn-danger-outline {
+    padding: 9px 12px; border: 1px solid #fecaca; border-radius: 8px;
+    background: #fff; color: #dc2626; font-size: 12.5px; font-weight: 700;
+  }
+
+  .cat-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; }
+  .cat-row .cat-name { width: 90px; flex-shrink: 0; }
+  .cat-bar-outer { flex: 1; background: #f0f0f0; border-radius: 6px; height: 8px; overflow: hidden; }
+  .cat-bar-inner { height: 100%; background: #6366f1; }
+  .cat-amt { width: 90px; flex-shrink: 0; text-align: right; color: #555; }
+
+  .tx-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #eee; font-size: 13.5px;
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-left .cat { font-weight: 600; }
+  .tx-left .note { font-size: 11.5px; color: #999; }
+  .tx-right { text-align: right; }
+  .tx-right .amt.in { color: #059669; font-weight: 700; }
+  .tx-right .amt.out { color: #dc2626; font-weight: 700; }
+  .tx-right .del { font-size: 11px; color: #bbb; margin-top: 2px; }
+
+  .empty { text-align: center; color: #999; font-size: 13px; padding: 20px 0; }
+
+  /* Loan card */
+  .loan-card {
+    border: 1px solid #eee; border-radius: 12px; padding: 14px; margin-top: 12px;
+  }
+  .loan-card.lunas { background: #f0fdf4; border-color: #bbf7d0; }
+  .loan-head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .loan-head .nama { font-weight: 700; font-size: 14.5px; }
+  .loan-head .badge {
+    font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+    background: #eef2ff; color: #4338ca; white-space: nowrap;
+  }
+  .loan-head .badge.lunas { background: #dcfce7; color: #166534; }
+  .loan-meta { font-size: 12px; color: #777; margin-top: 4px; }
+  .loan-progress-outer {
+    background: #eee; border-radius: 8px; height: 9px; overflow: hidden; margin-top: 10px;
+  }
+  .loan-progress-inner { height: 100%; background: #6366f1; }
+  .loan-progress-inner.lunas { background: #22c55e; }
+  .loan-progress-text { font-size: 11.5px; color: #666; margin-top: 5px; }
+  .loan-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .loan-actions .btn-secondary, .loan-actions .btn-danger-outline { flex: 1; }
+  .loan-actions .btn-secondary[disabled] { opacity: 0.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>Manajemen Keuangan</h1>
+    <div class="sub">Catat pemasukan, pengeluaran &amp; pinjaman/cicilan</div>
+    <div class="maintabs">
+      <button id="tabBtnUtama" class="active">Ringkasan &amp; Transaksi</button>
+      <button id="tabBtnPinjaman">Pinjaman</button>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW: UTAMA ==================== -->
+  <div id="viewUtama" class="view active">
+
+    <div class="card">
+      <div class="month-nav">
+        <button id="prevMonth">‹</button>
+        <div class="label" id="monthLabel">-</div>
+        <button id="nextMonth">›</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="sum-box sum-in">
+          <div class="lbl">Pemasukan</div>
+          <div class="val" id="sumIn">Rp 0</div>
+        </div>
+        <div class="sum-box sum-out">
+          <div class="lbl">Pengeluaran</div>
+          <div class="val" id="sumOut">Rp 0</div>
+        </div>
+        <div class="sum-box sum-net">
+          <div class="lbl">Sisa / Tabungan</div>
+          <div class="val" id="sumNet">Rp 0</div>
+        </div>
+      </div>
+
+      <label style="margin-top:16px;">Target tabungan bulan ini (Rp)</label>
+      <input type="number" id="target" value="0">
+      <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%;"></div></div>
+      <div class="sub" id="progressText" style="margin-top:6px; margin-bottom:0;">-</div>
+    </div>
+
+    <div class="card">
+      <h2>Tambah Transaksi</h2>
+      <div class="toggle">
+        <button id="btnIn" class="in">+ Pemasukan</button>
+        <button id="btnOut" class="out">- Pengeluaran</button>
+      </div>
+
+      <label>Kategori</label>
+      <select id="kategori"></select>
+
+      <div class="row2">
+        <div>
+          <label>Jumlah (Rp)</label>
+          <input type="number" id="jumlah" placeholder="0">
+        </div>
+        <div>
+          <label>Tanggal</label>
+          <input type="date" id="tanggal">
+        </div>
+      </div>
+
+      <label>Catatan (opsional)</label>
+      <input type="text" id="catatan" placeholder="mis: belanja bahan">
+
+      <button class="btn-primary" id="btnTambah">Simpan Transaksi</button>
+    </div>
+
+    <div class="card">
+      <h2>Rincian per Kategori</h2>
+      <div id="catBreakdown"><div class="empty">Belum ada data bulan ini</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Transaksi</h2>
+      <div id="txList"><div class="empty">Belum ada transaksi</div></div>
+    </div>
+
+  </div>
+
+  <!-- ==================== VIEW: PINJAMAN ==================== -->
+  <div id="viewPinjaman" class="view">
+
+    <div class="card">
+      <h2>Tambah Pinjaman Baru</h2>
+
+      <label>Nama Pinjaman</label>
+      <input type="text" id="loanNama" placeholder="mis: BFI Finance">
+
+      <div class="row2">
+        <div>
+          <label>Jumlah Pokok (Rp)</label>
+          <input type="number" id="loanPokok" placeholder="0">
+        </div>
+        <div>
+          <label>Tenor (bulan)</label>
+          <input type="number" id="loanTenor" placeholder="12">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Cicilan / bulan (Rp)</label>
+          <input type="number" id="loanCicilan" placeholder="0">
+        </div>
+        <div>
+          <label>Tanggal Cair</label>
+          <input type="date" id="loanTanggal">
+        </div>
+      </div>
+
+      <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+        <input type="checkbox" id="loanCatatMasuk" style="width:auto;" checked>
+        <span style="font-weight:600; font-size:13px;">Catat juga sebagai pemasukan "Pinjaman Masuk"</span>
+      </label>
+
+      <button class="btn-primary" id="btnTambahLoan">Simpan Pinjaman</button>
+    </div>
+
+    <div class="card">
+      <h2>Daftar Pinjaman</h2>
+      <div id="loanList"><div class="empty">Belum ada pinjaman tercatat</div></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const KATEGORI_IN = ['Gaji/Usaha Harian', 'Bonus', 'Pinjaman Masuk', 'Lainnya'];
+const KATEGORI_OUT = ['Cicilan/Utang', 'Makan', 'Transport', 'Belanja Rumah', 'Tagihan', 'Kesehatan', 'Lainnya'];
+
+let jenisAktif = 'in';
+let bulanAktif = new Date();
+let data = { transactions: [], targets: {}, loans: [] };
+
+function formatRp(n) {
+  return "Rp " + Math.round(n).toLocaleString("id-ID");
+}
+
+function monthKeyOf(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLabelOf(date) {
+  return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+}
+
+function formatTgl(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function muatData() {
+  try {
+    const r = await window.storage.get('keuangan-data');
+    data = r ? JSON.parse(r.value) : { transactions: [], targets: {}, loans: [] };
+    if (!data.loans) data.loans = [];
+  } catch (e) {
+    data = { transactions: [], targets: {}, loans: [] };
+  }
+}
+
+async function simpanData() {
+  try {
+    await window.storage.set('keuangan-data', JSON.stringify(data));
+  } catch (e) {
+    console.error('Gagal menyimpan', e);
+  }
+}
+
+/* ---------- Tab utama (Ringkasan/Transaksi vs Pinjaman) ---------- */
+function setMainTab(tab) {
+  document.getElementById('viewUtama').classList.toggle('active', tab === 'utama');
+  document.getElementById('viewPinjaman').classList.toggle('active', tab === 'pinjaman');
+  document.getElementById('tabBtnUtama').classList.toggle('active', tab === 'utama');
+  document.getElementById('tabBtnPinjaman').classList.toggle('active', tab === 'pinjaman');
+  if (tab === 'pinjaman') renderLoans();
+}
+document.getElementById('tabBtnUtama').addEventListener('click', () => setMainTab('utama'));
+document.getElementById('tabBtnPinjaman').addEventListener('click', () => setMainTab('pinjaman'));
+
+/* ---------- Transaksi (view utama) ---------- */
+function isiKategori() {
+  const sel = document.getElementById('kategori');
+  const list = jenisAktif === 'in' ? KATEGORI_IN : KATEGORI_OUT;
+  sel.innerHTML = list.map(k => `<option value="${k}">${k}</option>`).join('');
+}
+
+function setJenis(j) {
+  jenisAktif = j;
+  document.getElementById('btnIn').classList.toggle('active', j === 'in');
+  document.getElementById('btnOut').classList.toggle('active', j === 'out');
+  isiKategori();
+}
+
+function txBulanIni() {
+  const mk = monthKeyOf(bulanAktif);
+  return data.transactions.filter(t => t.tanggal.startsWith(mk));
+}
+
+function render() {
+  document.getElementById('monthLabel').textContent = monthLabelOf(bulanAktif);
+
+  const mk = monthKeyOf(bulanAktif);
+  const list = txBulanIni();
+
+  const totalIn = list.filter(t => t.jenis === 'in').reduce((a, b) => a + b.jumlah, 0);
+  const totalOut = list.filter(t => t.jenis === 'out').reduce((a, b) => a + b.jumlah, 0);
+  const net = totalIn - totalOut;
+
+  document.getElementById('sumIn').textContent = formatRp(totalIn);
+  document.getElementById('sumOut').textContent = formatRp(totalOut);
+  document.getElementById('sumNet').textContent = formatRp(net);
+
+  const target = data.targets[mk] || 0;
+  document.getElementById('target').value = target;
+  const pct = target > 0 ? Math.min(100, Math.max(0, (net / target) * 100)) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = target > 0
+    ? `${formatRp(net)} dari target ${formatRp(target)} (${pct.toFixed(0)}%)`
+    : 'Set target tabungan untuk lihat progres';
+
+  const catMap = {};
+  list.filter(t => t.jenis === 'out').forEach(t => {
+    catMap[t.kategori] = (catMap[t.kategori] || 0) + t.jumlah;
+  });
+  const catBox = document.getElementById('catBreakdown');
+  const entries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) {
+    catBox.innerHTML = '<div class="empty">Belum ada data bulan ini</div>';
+  } else {
+    const max = entries[0][1];
+    catBox.innerHTML = entries.map(([k, v]) => `
+      <div class="cat-row">
+        <div class="cat-name">${k}</div>
+        <div class="cat-bar-outer"><div class="cat-bar-inner" style="width:${(v / max) * 100}%;"></div></div>
+        <div class="cat-amt">${formatRp(v)}</div>
+      </div>
+    `).join('');
+  }
+
+  const txBox = document.getElementById('txList');
+  const sorted = [...list].sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  if (sorted.length === 0) {
+    txBox.innerHTML = '<div class="empty">Belum ada transaksi</div>';
+  } else {
+    txBox.innerHTML = sorted.map(t => `
+      <div class="tx-item">
+        <div class="tx-left">
+          <div class="cat">${t.kategori}</div>
+          <div class="note">${t.tanggal}${t.catatan ? ' · ' + t.catatan : ''}</div>
+        </div>
+        <div class="tx-right">
+          <div class="amt ${t.jenis}">${t.jenis === 'in' ? '+' : '-'}${formatRp(t.jumlah)}</div>
+          <div class="del" data-id="${t.id}">Hapus</div>
+        </div>
+      </div>
+    `).join('');
+    txBox.querySelectorAll('.del').forEach(el => {
+      el.addEventListener('click', async () => {
+        data.transactions = data.transactions.filter(t => t.id !== el.dataset.id);
+        await simpanData();
+        render();
+      });
+    });
+  }
+}
+
+document.getElementById('btnIn').addEventListener('click', () => setJenis('in'));
+document.getElementById('btnOut').addEventListener('click', () => setJenis('out'));
+
+document.getElementById('prevMonth').addEventListener('click', () => {
+  bulanAktif.setMonth(bulanAktif.getMonth() - 1);
+  render();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  bulanAktif.setMonth(bulanAktif.getMonth() + 1);
+  render();
+});
+
+document.getElementById('target').addEventListener('change', async (e) => {
+  const mk = monthKeyOf(bulanAktif);
+  data.targets[mk] = parseFloat(e.target.value) || 0;
+  await simpanData();
+  render();
+});
+
+document.getElementById('btnTambah').addEventListener('click', async () => {
+  const jumlah = parseFloat(document.getElementById('jumlah').value);
+  const tanggal = document.getElementById('tanggal').value || new Date().toISOString().slice(0, 10);
+  const kategori = document.getElementById('kategori').value;
+  const catatan = document.getElementById('catatan').value.trim();
+
+  if (!jumlah || jumlah <= 0) {
+    alert('Isi jumlah transaksi terlebih dahulu');
+    return;
+  }
+
+  data.transactions.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    jenis: jenisAktif,
+    kategori, jumlah, tanggal, catatan
+  });
+  await simpanData();
+
+  document.getElementById('jumlah').value = '';
+  document.getElementById('catatan').value = '';
+  render();
+});
+
+/* ---------- Pinjaman (view Pinjaman) ---------- */
+document.getElementById('btnTambahLoan').addEventListener('click', async () => {
+  const nama = document.getElementById('loanNama').value.trim();
+  const pokok = parseFloat(document.getElementById('loanPokok').value);
+  const tenor = parseInt(document.getElementById('loanTenor').value, 10);
+  const cicilan = parseFloat(document.getElementById('loanCicilan').value);
+  const tanggal = document.getElementById('loanTanggal').value || new Date().toISOString().slice(0, 10);
+  const catatMasuk = document.getElementById('loanCatatMasuk').checked;
+
+  if (!nama) { alert('Isi nama pinjaman terlebih dahulu'); return; }
+  if (!pokok || pokok <= 0) { alert('Isi jumlah pokok pinjaman'); return; }
+  if (!tenor || tenor <= 0) { alert('Isi tenor (jumlah bulan)'); return; }
+  if (!cicilan || cicilan <= 0) { alert('Isi jumlah cicilan per bulan'); return; }
+
+  const loan = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    nama, pokok, tenor, cicilan, tanggalCair: tanggal,
+    cicilanDibayar: 0,
+    riwayatBayar: []
+  };
+  data.loans.push(loan);
+
+  if (catatMasuk) {
+    data.transactions.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + 'a',
+      jenis: 'in',
+      kategori: 'Pinjaman Masuk',
+      jumlah: pokok,
+      tanggal,
+      catatan: `Pencairan pinjaman ${nama}`
+    });
+  }
+
+  await simpanData();
+
+  document.getElementById('loanNama').value = '';
+  document.getElementById('loanPokok').value = '';
+  document.getElementById('loanTenor').value = '';
+  document.getElementById('loanCicilan').value = '';
+
+  render();
+  renderLoans();
+});
+
+async function bayarCicilan(loanId) {
+  const loan = data.loans.find(l => l.id === loanId);
+  if (!loan) return;
+  if (loan.cicilanDibayar >= loan.tenor) return;
+
+  const tanggalBayar = new Date().toISOString().slice(0, 10);
+
+  const tx = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    jenis: 'out',
+    kategori: 'Cicilan/Utang',
+    jumlah: loan.cicilan,
+    tanggal: tanggalBayar,
+    catatan: `Cicilan ${loan.nama} (ke-${loan.cicilanDibayar + 1}/${loan.tenor})`
+  };
+  data.transactions.push(tx);
+
+  loan.cicilanDibayar += 1;
+  loan.riwayatBayar.push({ txId: tx.id, tanggal: tanggalBayar });
+
+  await simpanData();
+  render();
+  renderLoans();
+}
+
+async function batalCicilanTerakhir(loanId) {
+  const loan = data.loans.find(l => l.id === loanId);
+  if (!loan || loan.cicilanDibayar <= 0) return;
+
+  const last = loan.riwayatBayar.pop();
+  loan.cicilanDibayar -= 1;
+  if (last) {
+    data.transactions = data.transactions.filter(t => t.id !== last.txId);
+  }
+
+  await simpanData();
+  render();
+  renderLoans();
+}
+
+async function hapusLoan(loanId) {
+  const loan = data.loans.find(l => l.id === loanId);
+  if (!loan) return;
+  if (!confirm(`Hapus pinjaman "${loan.nama}"? Riwayat cicilan yang sudah tercatat sebagai transaksi tidak ikut terhapus.`)) return;
+
+  data.loans = data.loans.filter(l => l.id !== loanId);
+  await simpanData();
+  render();
+  renderLoans();
+}
+
+function renderLoans() {
+  const box = document.getElementById('loanList');
+  if (!data.loans || data.loans.length === 0) {
+    box.innerHTML = '<div class="empty">Belum ada pinjaman tercatat</div>';
+    return;
+  }
+
+  box.innerHTML = data.loans.map(l => {
+    const pct = Math.min(100, Math.round((l.cicilanDibayar / l.tenor) * 100));
+    const lunas = l.cicilanDibayar >= l.tenor;
+    const sisaBulan = Math.max(0, l.tenor - l.cicilanDibayar);
+    const sisaRp = sisaBulan * l.cicilan;
+    return `
+      <div class="loan-card ${lunas ? 'lunas' : ''}">
+        <div class="loan-head">
+          <div>
+            <div class="nama">${l.nama}</div>
+            <div class="loan-meta">Pokok ${formatRp(l.pokok)} · Cicilan ${formatRp(l.cicilan)}/bulan · Tenor ${l.tenor} bulan</div>
+            <div class="loan-meta">Cair: ${formatTgl(l.tanggalCair)}</div>
+          </div>
+          <div class="badge ${lunas ? 'lunas' : ''}">${lunas ? 'LUNAS' : `${l.cicilanDibayar}/${l.tenor}`}</div>
+        </div>
+        <div class="loan-progress-outer"><div class="loan-progress-inner ${lunas ? 'lunas' : ''}" style="width:${pct}%;"></div></div>
+        <div class="loan-progress-text">
+          ${lunas ? 'Semua cicilan sudah lunas 🎉' : `Sisa ${sisaBulan} bulan (${formatRp(sisaRp)})`}
+        </div>
+        <div class="loan-actions">
+          <button class="btn-secondary" data-pay="${l.id}" ${lunas ? 'disabled' : ''}>Bayar Cicilan Bulan Ini</button>
+          <button class="btn-danger-outline" data-hapus="${l.id}">Hapus</button>
+        </div>
+        ${l.cicilanDibayar > 0 ? `<div style="margin-top:6px; text-align:right;"><span style="font-size:11px; color:#999; cursor:pointer;" data-batal="${l.id}">Batalkan cicilan terakhir</span></div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  box.querySelectorAll('[data-pay]').forEach(el => {
+    el.addEventListener('click', () => bayarCicilan(el.dataset.pay));
+  });
+  box.querySelectorAll('[data-hapus]').forEach(el => {
+    el.addEventListener('click', () => hapusLoan(el.dataset.hapus));
+  });
+  box.querySelectorAll('[data-batal]').forEach(el => {
+    el.addEventListener('click', () => batalCicilanTerakhir(el.dataset.batal));
+  });
+}
+
+async function init() {
+  document.getElementById('tanggal').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('loanTanggal').value = new Date().toISOString().slice(0, 10);
+  setJenis('in');
+  await muatData();
+  render();
+  renderLoans();
+}
+
+init();
+</script>
+</body>
+</html>
