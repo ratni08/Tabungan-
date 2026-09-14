@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Keuangan</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    padding: 16px;
+    color: #1a1a1a;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .tabbar {
+    display: flex; gap: 6px; background: #fff; border-radius: 12px; padding: 5px;
+    margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); position: sticky; top: 8px; z-index: 10;
+  }
+  .tabbar button {
+    flex: 1; border: none; background: transparent; padding: 10px 4px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700; color: #888;
+  }
+  .tabbar button.active { background: #4f46e5; color: #fff; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 19px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 0 0 12px; color: #333; }
+  .sub { font-size: 12.5px; color: #666; margin-bottom: 14px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; margin-top: 12px; color: #333; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 15px; background: #fafafa;
+  }
+  .hint { font-size: 12px; color: #888; margin-top: 3px; }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > div { flex: 1; }
+
+  .result { margin-top: 18px; padding: 16px; border-radius: 10px; background: #eef2ff; }
+  .result .big { font-size: 26px; font-weight: 700; color: #3730a3; }
+  .result .lbl { font-size: 13px; color: #4338ca; }
+  .row { display: flex; justify-content: space-between; font-size: 13.5px; padding: 6px 0; border-bottom: 1px solid #e0e0f5; }
+  .row:last-child { border-bottom: none; }
+
+  .warn { margin-top: 12px; padding: 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+  .warn.ok { background: #ecfdf5; color: #065f46; }
+  .warn.bad { background: #fef2f2; color: #991b1b; }
+  .warn.mid { background: #fffbeb; color: #92400e; }
+
+  .progress-outer { background: #eee; border-radius: 8px; height: 12px; overflow: hidden; margin-top: 10px; }
+  .progress-inner { height: 100%; background: #4f46e5; transition: width 0.3s; }
+  .progress-text { font-size: 12.5px; color: #666; margin-top: 6px; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; }
+  .cal-day-name { text-align: center; font-size: 10.5px; color: #999; font-weight: 600; }
+  .cal-cell {
+    aspect-ratio: 1; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; border: 1px solid #eee; background: #fafafa; color: #aaa;
+  }
+  .cal-cell.saved { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+  .cal-cell.today { border: 2px solid #4f46e5; color: #4f46e5; }
+  .cal-cell.today.saved { color: #fff; }
+  .cal-cell.empty { visibility: hidden; }
+  .cal-cell.clickable { cursor: pointer; }
+
+  .btn-primary {
+    width: 100%; margin-top: 16px; padding: 13px; border: none; border-radius: 9px;
+    background: #4f46e5; color: #fff; font-size: 14.5px; font-weight: 700;
+  }
+  .btn-secondary {
+    width: 100%; margin-top: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 9px;
+    background: #fff; color: #888; font-size: 13px;
+  }
+  .note { margin-top: 14px; font-size: 11.5px; color: #999; line-height: 1.5; }
+
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .month-nav button { border: none; background: #eef2ff; color: #4338ca; width: 34px; height: 34px; border-radius: 8px; font-size: 16px; font-weight: 700; }
+  .month-nav .label { font-weight: 700; font-size: 15px; }
+
+  .summary-grid { display: flex; gap: 10px; }
+  .sum-box { flex: 1; border-radius: 10px; padding: 12px; }
+  .sum-box .lbl { font-size: 11.5px; opacity: 0.8; }
+  .sum-box .val { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .sum-in { background: #ecfdf5; color: #065f46; }
+  .sum-out { background: #fef2f2; color: #991b1b; }
+  .sum-net { background: #eef2ff; color: #3730a3; }
+
+  .toggle { display: flex; gap: 8px; margin-top: 12px; }
+  .toggle button {
+    flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff;
+    font-size: 13.5px; font-weight: 600; color: #888;
+  }
+  .toggle button.active.in { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+  .toggle button.active.out { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
+  .cat-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; }
+  .cat-row .cat-name { width: 90px; flex-shrink: 0; }
+  .cat-bar-outer { flex: 1; background: #f0f0f0; border-radius: 6px; height: 8px; overflow: hidden; }
+  .cat-bar-inner { height: 100%; background: #6366f1; }
+  .cat-amt { width: 90px; flex-shrink: 0; text-align: right; color: #555; }
+
+  .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 13.5px; }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-left .cat { font-weight: 600; }
+  .tx-left .note { font-size: 11.5px; color: #999; }
+  .tx-right { text-align: right; }
+  .tx-right .amt.in { color: #059669; font-weight: 700; }
+  .tx-right .amt.out { color: #dc2626; font-weight: 700; }
+  .tx-right .del { font-size: 11px; color: #bbb; margin-top: 2px; }
+  .empty { text-align: center; color: #999; font-size: 13px; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="cicilan">Cicilan</button>
+    <button class="tab-btn" data-tab="tabungan">Nabung Harian</button>
+    <button class="tab-btn" data-tab="keuangan">Keuangan</button>
+  </div>
+
+  <!-- ============ TAB 1: KALKULATOR CICILAN ============ -->
+  <div class="panel active" id="panel-cicilan">
+    <div class="card">
+      <h1>Kalkulator Cicilan</h1>
+      <div class="sub">Isi sesuai data di kontrak/perjanjian gadai BPKB Anda</div>
+
+      <label>Jumlah pinjaman cair (Rp)</label>
+      <input type="number" id="c_pokok" value="7600000">
+
+      <label>Bunga per bulan (%)</label>
+      <input type="number" id="c_bunga" value="2" step="0.1">
+      <div class="hint">Lihat di kontrak — biasanya tertulis "bunga flat per bulan"</div>
+
+      <label>Tenor / lama cicilan (bulan)</label>
+      <input type="number" id="c_tenor" value="12">
+
+      <label>Metode perhitungan</label>
+      <select id="c_metode">
+        <option value="flat">Flat (umum dipakai pembiayaan gadai BPKB)</option>
+        <option value="anuitas">Anuitas (bunga menurun)</option>
+      </select>
+
+      <label>Penghasilan per hari kerja (Rp)</label>
+      <input type="number" id="c_hariUpah" value="50000">
+
+      <label>Jumlah hari kerja per bulan</label>
+      <input type="number" id="c_hariKerja" value="26">
+
+      <div class="result">
+        <div class="lbl">Cicilan per bulan (estimasi)</div>
+        <div class="big" id="c_cicilanBulan">Rp 0</div>
+        <div class="row"><span>Total pokok</span><span id="c_outPokok">-</span></div>
+        <div class="row"><span>Total bunga selama tenor</span><span id="c_outBunga">-</span></div>
+        <div class="row"><span>Total yang harus dibayar</span><span id="c_outTotal">-</span></div>
+      </div>
+
+      <div id="c_warnBox" class="warn"></div>
+
+      <div class="note">
+        Ini hanya perhitungan estimasi. Metode "flat" paling umum dipakai gadai BPKB, tapi angka pastinya tetap mengacu ke perjanjian resmi — kalau ragu, tanyakan ke petugas BFI.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: NABUNG HARIAN ============ -->
+  <div class="panel" id="panel-tabungan">
+    <div class="card">
+      <h1>Menabung Harian</h1>
+      <div class="sub">Sisihkan sedikit tiap hari kerja untuk mengejar target bulanan</div>
+
+      <label>Target tabungan bulan ini (Rp)</label>
+      <input type="number" id="t_target" value="900000">
+      <div class="sub" style="margin:2px 0 0;">Contoh: cicilan bulanan Anda</div>
+
+      <div class="row2">
+        <div>
+          <label>Penghasilan per hari kerja (Rp)</label>
+          <input type="number" id="t_upahHarian" value="50000">
+        </div>
+        <div>
+          <label>Hari kerja per minggu</label>
+          <input type="number" id="t_hariPerMinggu" value="6">
+        </div>
+      </div>
+
+      <div class="result">
+        <div class="lbl">Wajib ditabung per hari kerja</div>
+        <div class="big" id="t_wajibHarian">Rp 0</div>
+        <div class="row"><span>Sisa untuk kebutuhan lain / hari</span><span id="t_sisaHarian">-</span></div>
+        <div class="row"><span>Perkiraan hari kerja bulan ini</span><span id="t_hariKerjaBulan">-</span></div>
+      </div>
+
+      <div id="t_warnBox" class="warn"></div>
+    </div>
+
+    <div class="card">
+      <h2>Progres Bulan Ini</h2>
+      <div id="t_progressLbl" class="progress-text">-</div>
+      <div class="progress-outer"><div class="progress-inner" id="t_progressBar" style="width:0%;"></div></div>
+      <div class="progress-text" id="t_progressPct" style="text-align:right;">0%</div>
+
+      <label style="margin-top:16px;">Kalender — tap hari yang sudah ditabung</label>
+      <div class="cal-grid" id="t_calGrid"></div>
+
+      <button class="btn-primary" id="t_btnTandaiHariIni">Tandai hari ini sudah menabung</button>
+      <button class="btn-secondary" id="t_btnReset">Reset progres bulan ini</button>
+
+      <div class="note">Tap tanggal di kalender untuk menandai/membatalkan — tidak harus urut.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: MANAJEMEN KEUANGAN ============ -->
+  <div class="panel" id="panel-keuangan">
+    <div class="card">
+      <h1>Manajemen Keuangan</h1>
+      <div class="sub">Catat pemasukan &amp; pengeluaran, pantau tabungan bulanan</div>
+
+      <div class="month-nav">
+        <button id="k_prevMonth">‹</button>
+        <div class="label" id="k_monthLabel">-</div>
+        <button id="k_nextMonth">›</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="sum-box sum-in"><div class="lbl">Pemasukan</div><div class="val" id="k_sumIn">Rp 0</div></div>
+        <div class="sum-box sum-out"><div class="lbl">Pengeluaran</div><div class="val" id="k_sumOut">Rp 0</div></div>
+        <div class="sum-box sum-net"><div class="lbl">Sisa / Tabungan</div><div class="val" id="k_sumNet">Rp 0</div></div>
+      </div>
+
+      <label style="margin-top:16px;">Target tabungan bulan ini (Rp)</label>
+      <input type="number" id="k_target" value="0">
+      <div class="progress-outer"><div class="progress-inner" id="k_progressBar" style="width:0%;"></div></div>
+      <div class="sub" id="k_progressText" style="margin-top:6px; margin-bottom:0;">-</div>
+    </div>
+
+    <div class="card">
+      <h2>Tambah Transaksi</h2>
+      <div class="toggle">
+        <button id="k_btnIn" class="in">+ Pemasukan</button>
+        <button id="k_btnOut" class="out">- Pengeluaran</button>
+      </div>
+      <label>Kategori</label>
+      <select id="k_kategori"></select>
+      <div class="row2">
+        <div><label>Jumlah (Rp)</label><input type="number" id="k_jumlah" placeholder="0"></div>
+        <div><label>Tanggal</label><input type="date" id="k_tanggal"></div>
+      </div>
+      <label>Catatan (opsional)</label>
+      <input type="text" id="k_catatan" placeholder="mis: cicilan BFI, belanja bahan">
+      <button class="btn-primary" id="k_btnTambah">Simpan Transaksi</button>
+    </div>
+
+    <div class="card">
+      <h2>Buku Tabungan</h2>
+      <div class="sub">Catat kapan Anda setor dan ambil dari tabungan</div>
+      <div class="summary-grid" style="margin-bottom:4px;">
+        <div class="sum-box sum-net" style="flex:1;">
+          <div class="lbl">Saldo Tabungan Saat Ini</div>
+          <div class="val" id="k_saldoTabungan">Rp 0</div>
+        </div>
+      </div>
+      <div class="toggle">
+        <button id="k_btnSetor" class="in">+ Setor</button>
+        <button id="k_btnAmbil" class="out">- Ambil</button>
+      </div>
+      <div class="row2">
+        <div><label>Jumlah (Rp)</label><input type="number" id="k_jumlahTabungan" placeholder="0"></div>
+        <div><label>Tanggal</label><input type="date" id="k_tanggalTabungan"></div>
+      </div>
+      <label>Catatan (opsional)</label>
+      <input type="text" id="k_catatanTabungan" placeholder="mis: setor harian, ambil untuk cicilan">
+      <button class="btn-primary" id="k_btnTambahTabungan">Simpan ke Buku Tabungan</button>
+      <div style="margin-top:18px;">
+        <div id="k_tabunganList"><div class="empty">Belum ada catatan setor/ambil</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Rincian per Kategori</h2>
+      <div id="k_catBreakdown"><div class="empty">Belum ada data bulan ini</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Transaksi</h2>
+      <div id="k_txList"><div class="empty">Belum ada transaksi</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============ TAB SWITCHING ============ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+function formatRp(n) {
+  return "Rp " + Math.round(n).toLocaleString("id-ID");
+}
+
+/* ============ TAB 1: KALKULATOR CICILAN ============ */
+function hitungCicilan() {
+  const pokok = parseFloat(document.getElementById('c_pokok').value) || 0;
+  const bungaPersen = parseFloat(document.getElementById('c_bunga').value) || 0;
+  const tenor = parseInt(document.getElementById('c_tenor').value) || 1;
+  const metode = document.getElementById('c_metode').value;
+  const hariUpah = parseFloat(document.getElementById('c_hariUpah').value) || 0;
+  const hariKerja = parseFloat(document.getElementById('c_hariKerja').value) || 0;
+
+  let cicilanPerBulan, totalBunga, totalBayar;
+
+  if (metode === 'flat') {
+    const cicilanPokok = pokok / tenor;
+    const bungaPerBulan = pokok * (bungaPersen / 100);
+    cicilanPerBulan = cicilanPokok + bungaPerBulan;
+    totalBunga = bungaPerBulan * tenor;
+    totalBayar = pokok + totalBunga;
+  } else {
+    const i = bungaPersen / 100;
+    cicilanPerBulan = i === 0 ? pokok / tenor : pokok * i / (1 - Math.pow(1 + i, -tenor));
+    totalBayar = cicilanPerBulan * tenor;
+    totalBunga = totalBayar - pokok;
+  }
+
+  document.getElementById('c_cicilanBulan').textContent = formatRp(cicilanPerBulan);
+  document.getElementById('c_outPokok').textContent = formatRp(pokok);
+  document.getElementById('c_outBunga').textContent = formatRp(totalBunga);
+  document.getElementById('c_outTotal').textContent = formatRp(totalBayar);
+
+  const penghasilanBulan = hariUpah * hariKerja;
+  const persen = penghasilanBulan > 0 ? (cicilanPerBulan / penghasilanBulan) * 100 : 0;
+
+  const warnBox = document.getElementById('c_warnBox');
+  let msg = `Penghasilan Anda per bulan (estimasi): ${formatRp(penghasilanBulan)}. Cicilan ini setara <b>${persen.toFixed(0)}%</b> dari penghasilan bulanan Anda.`;
+  if (persen > 40) {
+    warnBox.className = 'warn bad';
+    msg += ' Ini tergolong berat — porsi cicilan idealnya di bawah 30% dari penghasilan.';
+  } else if (persen > 25) {
+    warnBox.className = 'warn mid';
+    msg += ' Ini cukup berat, perlu diatur ketat pengeluaran lain.';
+  } else {
+    warnBox.className = 'warn ok';
+    msg += ' Porsinya masih tergolong wajar.';
+  }
+  warnBox.innerHTML = msg;
+}
+document.querySelectorAll('#panel-cicilan input, #panel-cicilan select').forEach(el => {
+  el.addEventListener('input', hitungCicilan);
+  el.addEventListener('change', hitungCicilan);
+});
+hitungCicilan();
+
+/* ============ TAB 2: NABUNG HARIAN ============ */
+let savedDays = new Set();
+const activeMonthTabungan = new Date();
+
+function monthKeyTabungan(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function loadTabunganData() {
+  try {
+    const r = await window.storage.get(`tabungan-harian:${monthKeyTabungan(activeMonthTabungan)}`);
+    const parsed = r ? JSON.parse(r.value) : { days: [] };
+    savedDays = new Set(parsed.days || []);
+  } catch (e) {
+    savedDays = new Set();
+  }
+}
+async function persistTabungan() {
+  try {
+    await window.storage.set(`tabungan-harian:${monthKeyTabungan(activeMonthTabungan)}`, JSON.stringify({ days: [...savedDays] }));
+  } catch (e) { console.error('Gagal menyimpan', e); }
+}
+
+function hitungRingkasanTabungan() {
+  const target = parseFloat(document.getElementById('t_target').value) || 0;
+  const upah = parseFloat(document.getElementById('t_upahHarian').value) || 0;
+  const hariPerMinggu = parseFloat(document.getElementById('t_hariPerMinggu').value) || 6;
+  const hariKerjaBulan = Math.round(hariPerMinggu * 4.33);
+  const wajib = hariKerjaBulan > 0 ? target / hariKerjaBulan : 0;
+  const sisa = upah - wajib;
+
+  document.getElementById('t_wajibHarian').textContent = formatRp(wajib);
+  document.getElementById('t_sisaHarian').textContent = formatRp(sisa) + (sisa < 0 ? ' (kurang!)' : '');
+  document.getElementById('t_hariKerjaBulan').textContent = hariKerjaBulan + ' hari';
+
+  const warnBox = document.getElementById('t_warnBox');
+  const rasio = upah > 0 ? (wajib / upah) * 100 : 0;
+  if (rasio > 85) {
+    warnBox.className = 'warn bad';
+    warnBox.textContent = `Target ini butuh ${rasio.toFixed(0)}% dari penghasilan harian Anda — sangat berat.`;
+  } else if (rasio > 60) {
+    warnBox.className = 'warn mid';
+    warnBox.textContent = `Target ini butuh ${rasio.toFixed(0)}% dari penghasilan harian Anda — cukup berat.`;
+  } else {
+    warnBox.className = 'warn ok';
+    warnBox.textContent = `Target ini butuh ${rasio.toFixed(0)}% dari penghasilan harian Anda — masih ada ruang untuk kebutuhan lain.`;
+  }
+  return { target, wajib };
+}
+
+function renderKalenderTabungan() {
+  const grid = document.getElementById('t_calGrid');
+  grid.innerHTML = '';
+  ['M','S','S','R','K','J','S'].forEach(n => {
+    const d = document.createElement('div');
+    d.className = 'cal-day-name'; d.textContent = n;
+    grid.appendChild(d);
+  });
+  const year = activeMonthTabungan.getFullYear();
+  const month = activeMonthTabungan.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = todayStr();
+
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-cell empty';
+    grid.appendChild(empty);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell clickable';
+    if (savedDays.has(dateStr)) cell.classList.add('saved');
+    if (dateStr === today) cell.classList.add('today');
+    cell.textContent = d;
+    cell.addEventListener('click', async () => {
+      savedDays.has(dateStr) ? savedDays.delete(dateStr) : savedDays.add(dateStr);
+      await persistTabungan();
+      renderSemuaTabungan();
+    });
+    grid.appendChild(cell);
+  }
+}
+
+function renderProgresTabungan(ringkasan) {
+  const totalTerkumpul = savedDays.size * ringkasan.wajib;
+  const pct = ringkasan.target > 0 ? Math.min(100, (totalTerkumpul / ringkasan.target) * 100) : 0;
+  document.getElementById('t_progressLbl').textContent =
+    `${savedDays.size} hari ditandai — terkumpul ${formatRp(totalTerkumpul)} dari target ${formatRp(ringkasan.target)}`;
+  document.getElementById('t_progressBar').style.width = pct + '%';
+  document.getElementById('t_progressPct').textContent = pct.toFixed(0) + '%';
+}
+
+function renderSemuaTabungan() {
+  const ringkasan = hitungRingkasanTabungan();
+  renderKalenderTabungan();
+  renderProgresTabungan(ringkasan);
+}
+
+document.getElementById('t_btnTandaiHariIni').addEventListener('click', async () => {
+  savedDays.add(todayStr());
+  await persistTabungan();
+  renderSemuaTabungan();
+});
+document.getElementById('t_btnReset').addEventListener('click', async () => {
+  if (!confirm('Reset semua tanda tabungan bulan ini?')) return;
+  savedDays.clear();
+  await persistTabungan();
+  renderSemuaTabungan();
+});
+['t_target', 't_upahHarian', 't_hariPerMinggu'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderSemuaTabungan);
+});
+
+/* ============ TAB 3: MANAJEMEN KEUANGAN ============ */
+const KATEGORI_IN = ['Gaji/Usaha Harian', 'Bonus', 'Pinjaman Masuk', 'Lainnya'];
+const KATEGORI_OUT = ['Cicilan/Utang', 'Makan', 'Transport', 'Belanja Rumah', 'Tagihan', 'Kesehatan', 'Lainnya'];
+let jenisAktif = 'in';
+let jenisTabunganAktif = 'setor';
+let bulanAktifKeu = new Date();
+let dataKeu = { transactions: [], targets: [], savings: [] };
+
+function monthKeyKeu(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
+function monthLabelKeu(date) { return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }); }
+
+async function muatDataKeu() {
+  try {
+    const r = await window.storage.get('keuangan-data');
+    dataKeu = r ? JSON.parse(r.value) : { transactions: [], targets: {}, savings: [] };
+    if (!dataKeu.savings) dataKeu.savings = [];
+    if (!dataKeu.targets) dataKeu.targets = {};
+  } catch (e) {
+    dataKeu = { transactions: [], targets: {}, savings: [] };
+  }
+}
+async function simpanDataKeu() {
+  try { await window.storage.set('keuangan-data', JSON.stringify(dataKeu)); }
+  catch (e) { console.error('Gagal menyimpan', e); }
+}
+
+function isiKategori() {
+  const sel = document.getElementById('k_kategori');
+  const list = jenisAktif === 'in' ? KATEGORI_IN : KATEGORI_OUT;
+  sel.innerHTML = list.map(k => `<option value="${k}">${k}</option>`).join('');
+}
+function setJenis(j) {
+  jenisAktif = j;
+  document.getElementById('k_btnIn').classList.toggle('active', j === 'in');
+  document.getElementById('k_btnOut').classList.toggle('active', j === 'out');
+  isiKategori();
+}
+function setJenisTabungan(j) {
+  jenisTabunganAktif = j;
+  document.getElementById('k_btnSetor').classList.toggle('active', j === 'setor');
+  document.getElementById('k_btnAmbil').classList.toggle('active', j === 'ambil');
+}
+
+function txBulanIniKeu() {
+  const mk = monthKeyKeu(bulanAktifKeu);
+  return dataKeu.transactions.filter(t => t.tanggal.startsWith(mk));
+}
+
+function renderKeuangan() {
+  document.getElementById('k_monthLabel').textContent = monthLabelKeu(bulanAktifKeu);
+  const mk = monthKeyKeu(bulanAktifKeu);
+  const list = txBulanIniKeu();
+
+  const totalIn = list.filter(t => t.jenis === 'in').reduce((a, b) => a + b.jumlah, 0);
+  const totalOut = list.filter(t => t.jenis === 'out').reduce((a, b) => a + b.jumlah, 0);
+  const net = totalIn - totalOut;
+
+  document.getElementById('k_sumIn').textContent = formatRp(totalIn);
+  document.getElementById('k_sumOut').textContent = formatRp(totalOut);
+  document.getElementById('k_sumNet').textContent = formatRp(net);
+
+  const target = dataKeu.targets[mk] || 0;
+  document.getElementById('k_target').value = target;
+  const pct = target > 0 ? Math.min(100, Math.max(0, (net / target) * 100)) : 0;
+  document.getElementById('k_progressBar').style.width = pct + '%';
+  document.getElementById('k_progressText').textContent = target > 0
+    ? `${formatRp(net)} dari target ${formatRp(target)} (${pct.toFixed(0)}%)`
+    : 'Set target tabungan untuk lihat progres';
+
+  const catMap = {};
+  list.filter(t => t.jenis === 'out').forEach(t => { catMap[t.kategori] = (catMap[t.kategori] || 0) + t.jumlah; });
+  const catBox = document.getElementById('k_catBreakdown');
+  const entries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) {
+    catBox.innerHTML = '<div class="empty">Belum ada data bulan ini</div>';
+  } else {
+    const max = entries[0][1];
+    catBox.innerHTML = entries.map(([k, v]) => `
+      <div class="cat-row">
+        <div class="cat-name">${k}</div>
+        <div class="cat-bar-outer"><div class="cat-bar-inner" style="width:${(v / max) * 100}%;"></div></div>
+        <div class="cat-amt">${formatRp(v)}</div>
+      </div>`).join('');
+  }
+
+  const txBox = document.getElementById('k_txList');
+  const sorted = [...list].sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  if (sorted.length === 0) {
+    txBox.innerHTML = '<div class="empty">Belum ada transaksi</div>';
+  } else {
+    txBox.innerHTML = sorted.map(t => `
+      <div class="tx-item">
+        <div class="tx-left"><div class="cat">${t.kategori}</div><div class="note">${t.tanggal}${t.catatan ? ' · ' + t.catatan : ''}</div></div>
+        <div class="tx-right"><div class="amt ${t.jenis}">${t.jenis === 'in' ? '+' : '-'}${formatRp(t.jumlah)}</div><div class="del" data-id="${t.id}">Hapus</div></div>
+      </div>`).join('');
+    txBox.querySelectorAll('.del').forEach(el => {
+      el.addEventListener('click', async () => {
+        dataKeu.transactions = dataKeu.transactions.filter(t => t.id !== el.dataset.id);
+        await simpanDataKeu();
+        renderKeuangan();
+      });
+    });
+  }
+}
+
+function renderTabunganKeu() {
+  const totalSetor = dataKeu.savings.filter(s => s.jenis === 'setor').reduce((a, b) => a + b.jumlah, 0);
+  const totalAmbil = dataKeu.savings.filter(s => s.jenis === 'ambil').reduce((a, b) => a + b.jumlah, 0);
+  document.getElementById('k_saldoTabungan').textContent = formatRp(totalSetor - totalAmbil);
+
+  const box = document.getElementById('k_tabunganList');
+  const sorted = [...dataKeu.savings].sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  if (sorted.length === 0) {
+    box.innerHTML = '<div class="empty">Belum ada catatan setor/ambil</div>';
+  } else {
+    box.innerHTML = sorted.map(s => `
+      <div class="tx-item">
+        <div class="tx-left"><div class="cat">${s.jenis === 'setor' ? 'Setor' : 'Ambil'}</div><div class="note">${s.tanggal}${s.catatan ? ' · ' + s.catatan : ''}</div></div>
+        <div class="tx-right"><div class="amt ${s.jenis === 'setor' ? 'in' : 'out'}">${s.jenis === 'setor' ? '+' : '-'}${formatRp(s.jumlah)}</div><div class="del" data-id="${s.id}">Hapus</div></div>
+      </div>`).join('');
+    box.querySelectorAll('.del').forEach(el => {
+      el.addEventListener('click', async () => {
+        dataKeu.savings = dataKeu.savings.filter(s => s.id !== el.dataset.id);
+        await simpanDataKeu();
+        renderTabunganKeu();
+      });
+    });
+  }
+}
+
+document.getElementById('k_btnIn').addEventListener('click', () => setJenis('in'));
+document.getElementById('k_btnOut').addEventListener('click', () => setJenis('out'));
+document.getElementById('k_btnSetor').addEventListener('click', () => setJenisTabungan('setor'));
+document.getElementById('k_btnAmbil').addEventListener('click', () => setJenisTabungan('ambil'));
+
+document.getElementById('k_prevMonth').addEventListener('click', () => { bulanAktifKeu.setMonth(bulanAktifKeu.getMonth() - 1); renderKeuangan(); });
+document.getElementById('k_nextMonth').addEventListener('click', () => { bulanAktifKeu.setMonth(bulanAktifKeu.getMonth() + 1); renderKeuangan(); });
+
+document.getElementById('k_target').addEventListener('change', async (e) => {
+  const mk = monthKeyKeu(bulanAktifKeu);
+  dataKeu.targets[mk] = parseFloat(e.target.value) || 0;
+  await simpanDataKeu();
+  renderKeuangan();
+});
+
+document.getElementById('k_btnTambah').addEventListener('click', async () => {
+  const jumlah = parseFloat(document.getElementById('k_jumlah').value);
+  const tanggal = document.getElementById('k_tanggal').value || todayStr();
+  const kategori = document.getElementById('k_kategori').value;
+  const catatan = document.getElementById('k_catatan').value.trim();
+  if (!jumlah || jumlah <= 0) { alert('Isi jumlah transaksi terlebih dahulu'); return; }
+  dataKeu.transactions.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), jenis: jenisAktif, kategori, jumlah, tanggal, catatan });
+  await simpanDataKeu();
+  document.getElementById('k_jumlah').value = '';
+  document.getElementById('k_catatan').value = '';
+  renderKeuangan();
+});
+
+document.getElementById('k_btnTambahTabungan').addEventListener('click', async () => {
+  const jumlah = parseFloat(document.getElementById('k_jumlahTabungan').value);
+  const tanggal = document.getElementById('k_tanggalTabungan').value || todayStr();
+  const catatan = document.getElementById('k_catatanTabungan').value.trim();
+  if (!jumlah || jumlah <= 0) { alert('Isi jumlah setor/ambil terlebih dahulu'); return; }
+  dataKeu.savings.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), jenis: jenisTabunganAktif, jumlah, tanggal, catatan });
+  await simpanDataKeu();
+  document.getElementById('k_jumlahTabungan').value = '';
+  document.getElementById('k_catatanTabungan').value = '';
+  renderTabunganKeu();
+});
+
+/* ============ INIT SEMUA ============ */
+async function initSemua() {
+  document.getElementById('k_tanggal').value = todayStr();
+  document.getElementById('k_tanggalTabungan').value = todayStr();
+  setJenis('in');
+  setJenisTabungan('setor');
+
+  await loadTabunganData();
+  renderSemuaTabungan();
+
+  await muatDataKeu();
+  renderKeuangan();
+  renderTabunganKeu();
+}
+initSemua();
+</script>
+</body>
+</html>
